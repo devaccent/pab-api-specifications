@@ -1,0 +1,225 @@
+---
+swagger: '2.0'
+info:
+  version: "1.0.0"
+  title: API Specifications
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+schemes:
+  - https
+
+consumes:
+  - application/json
+produces:
+  - application/json
+
+securityDefinitions:
+  ApiKey:
+    type: apiKey
+    in: header
+    name: X-API-KEY
+
+security:
+  - ApiKey: []
+
+parameters:
+  Limit:
+    in: query
+    name: limit
+    type: integer
+    description: Maximum number of records to return
+  Offset:
+    in: query
+    name: offset
+    type: integer
+    description: The offset of the first record to return, 0 based number
+
+responses:
+  400:
+    description: Invalid input
+  401:
+    description: Authentication failed
+  403:
+    description: User is unauthorized for this operation
+
+definitions:
+  Account:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: Unique account id
+      name:
+        type: string
+        format: string
+        description: Account name
+      status:
+        type: string
+        default: 'inactive'
+        enum: ['active', 'inactive', 'deleted']
+        description: The user status
+      updatedAt:
+        type: string
+        description: The last date it was updated
+        format: 'date-time'
+        readOnly: true
+        example: '2019-06-30T09:01:50.000Z'
+      createdAt:
+        type: string
+        description: The date it was created
+        readOnly: true
+        format: 'date-time'
+        example: '2019-06-30T09:01:50.000Z'
+
+  User:
+    type: object
+    required:
+      - email
+      - password
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: Unique user id
+      accountId:
+        type: integer
+        format: int32
+        description: Account id the user belong to
+      name:
+        type: string
+        format: string
+        description: The user full name
+      email:
+        type: string
+        format: email
+        description: The user email
+      password:
+        type: string
+        format: string
+        description: The user password
+      status:
+        type: string
+        default: 'inactive'
+        enum: ['active', 'inactive', 'deleted']
+        description: The user status
+      updatedAt:
+        type: string
+        description: The last date it was updated
+        format: 'date-time'
+        readOnly: true
+        example: '2019-06-30T09:01:50.000Z'
+      createdAt:
+        type: string
+        description: The date it was created
+        readOnly: true
+        format: 'date-time'
+        example: '2019-06-30T09:01:50.000Z'
+
+  AccountsPaginated:
+    type: object
+    properties:
+      total:
+        type: integer
+        description: The total filtered count of items
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/User'
+
+  UsersPaginated:
+    type: object
+    properties:
+      total:
+        type: integer
+        description: The total filtered count of items
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/User'
+paths:
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Search through all the users
+      operationId: searchUsers
+      description: |
+        By passing in the appropriate options, you can search for
+        available users in the system
+      parameters:
+        - in: query
+          name: searchString
+          type: string
+          description: Pass an optional search string for looking up users with the name or email containing the string
+          required: false
+        - $ref: '#/parameters/Limit'
+        - $ref: '#/parameters/Offset'
+      responses:
+        200:
+          description: Search results matching criteria
+          schema:
+            $ref: '#/definitions/UsersPaginated'
+        401:
+          $ref: '#/responses/401'
+        403:
+          $ref: '#/responses/403'
+    post:
+      tags:
+        - Users
+      summary: Adds a user to the system
+      operationId: addUser
+      description: Adds a user to the system
+      parameters:
+        - in: body
+          name: user
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        200:
+          description: The created user
+          schema:
+            $ref: '#/definitions/User'
+        400:
+          $ref: '#/responses/400'
+        401:
+          $ref: '#/responses/401'
+        403:
+          $ref: '#/responses/403'
+        409:
+          description: A user with the same email already exists
+  /users/{userId}:
+    put:
+      tags:
+        - Users
+      summary: Update user data
+      operationId: updateUser
+      description: |
+        Updates user data. The user itself and the admin can change an user data
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          type: integer
+        - in: body
+          name: user
+          required: true
+          description: It contains only the data wanted to be updated
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        201:
+          description: User updated
+        400:
+          $ref: '#/responses/400'
+        401:
+          $ref: '#/responses/401'
+        403:
+          $ref: '#/responses/403'
+        404:
+          description: User not found
+        409:
+          description: A user with the same email already exists
