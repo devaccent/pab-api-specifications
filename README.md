@@ -1,3 +1,3 @@
-PAB API specifications
+PAB API Specifications
 ========================
 
